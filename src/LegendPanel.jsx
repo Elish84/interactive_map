@@ -70,7 +70,7 @@ const LegendPanel = ({ visitedCountries, filterCategories, toggleFilterCategory,
                 style={{ flex: 1 }}
               >
                 <div className="color-dot" style={{ backgroundColor: cat.color }}></div>
-                <span>{cat.name}</span>
+                <span>{cat.label}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="category-count">{counts[cat.id]}</span>

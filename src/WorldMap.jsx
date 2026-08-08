@@ -11,7 +11,7 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
   const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
 
   const handleZoomIn = () => {
-    setPosition(pos => ({ ...pos, zoom: Math.min(pos.zoom * 1.5, 8) }));
+    setPosition(pos => ({ ...pos, zoom: Math.min(pos.zoom * 1.5, 16) }));
   };
 
   const handleZoomOut = () => {
@@ -132,7 +132,7 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
           center={position.coordinates} 
           onMoveEnd={handleMoveEnd} 
           minZoom={1} 
-          maxZoom={8}
+          maxZoom={16}
         >
           {/* World Map */}
           <Geographies geography={geoUrl}>
@@ -167,8 +167,11 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
                     fill: '#fff', 
                     fontSize: `${10 / position.zoom}px`, 
                     fontWeight: 'bold',
-                    textShadow: '0px 1px 2px rgba(0,0,0,0.9), 0px 0px 2px rgba(0,0,0,1)' 
                   }}
+                  stroke="#000"
+                  strokeWidth={2 / position.zoom}
+                  strokeLinejoin="round"
+                  paintOrder="stroke fill"
                 >
                   {m.name}
                 </text>
