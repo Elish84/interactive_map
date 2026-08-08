@@ -11,7 +11,7 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
   const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
 
   const handleZoomIn = () => {
-    setPosition(pos => ({ ...pos, zoom: Math.min(pos.zoom * 1.5, 16) }));
+    setPosition(pos => ({ ...pos, zoom: Math.min(pos.zoom * 1.5, 40) }));
   };
 
   const handleZoomOut = () => {
@@ -52,23 +52,34 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
     return defs;
   }, [visitedCountries, filterCategories, categories]);
 
-  // Extract markers
+  // Extract markers and group by coordinates
   const markersToRender = useMemo(() => {
-    const result = [];
+    const coordMap = {};
     Object.keys(visitedCountries).forEach(geoId => {
       const visits = visitedCountries[geoId];
       visits.forEach(v => {
         if (filterCategories.length === 0 || filterCategories.includes(v.categoryId)) {
           if (v.markers) {
-            v.markers.forEach((m, idx) => {
+            v.markers.forEach((m) => {
               const cat = categories.find(c => c.id === v.categoryId);
-              result.push({ ...m, color: cat ? cat.color : '#fff', visitId: v.id, idx });
+              const key = `${m.coordinates[0]},${m.coordinates[1]}`;
+              if (!coordMap[key]) {
+                coordMap[key] = {
+                  coordinates: m.coordinates,
+                  name: m.name,
+                  visits: []
+                };
+              }
+              // Prevent exact duplicates if user saved same visit multiple times
+              if (!coordMap[key].visits.find(existingV => existingV.id === v.id)) {
+                coordMap[key].visits.push(v);
+              }
             });
           }
         }
       });
     });
-    return result;
+    return Object.values(coordMap);
   }, [visitedCountries, filterCategories, categories]);
 
   const renderGeography = (geo, isUsState = false) => {
@@ -132,7 +143,7 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
           center={position.coordinates} 
           onMoveEnd={handleMoveEnd} 
           minZoom={1} 
-          maxZoom={16}
+          maxZoom={40}
         >
           {/* World Map */}
           <Geographies geography={geoUrl}>
@@ -151,33 +162,56 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
           </Geographies>
           
           {/* Markers */}
-          {markersToRender.map((m) => (
-            <Marker key={`${m.visitId}-${m.idx}`} coordinates={m.coordinates}>
-              <circle 
-                r={3 / position.zoom} 
-                fill={m.color} 
-                stroke="#111" 
-                strokeWidth={1 / position.zoom} 
-              />
-              {position.zoom > 2.5 && (
-                <text 
-                  textAnchor="middle" 
-                  y={-(6 / position.zoom)} 
-                  style={{ 
-                    fill: '#fff', 
-                    fontSize: `${10 / position.zoom}px`, 
-                    fontWeight: 'bold',
-                  }}
-                  stroke="#000"
-                  strokeWidth={2 / position.zoom}
-                  strokeLinejoin="round"
-                  paintOrder="stroke fill"
-                >
-                  {m.name}
-                </text>
-              )}
-            </Marker>
-          ))}
+          {markersToRender.map((mGroup, i) => {
+            const firstCat = categories.find(c => c.id === mGroup.visits[0].categoryId);
+            const markerColor = firstCat ? firstCat.color : '#fff';
+            return (
+              <Marker 
+                key={`marker-${i}`} 
+                coordinates={mGroup.coordinates}
+                onMouseEnter={(e) => {
+                  setTooltipContent({ name: mGroup.name, visits: mGroup.visits });
+                  setTooltipPos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseMove={(e) => {
+                  setTooltipPos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseLeave={() => {
+                  setTooltipContent(null);
+                }}
+                style={{
+                  default: { outline: 'none' },
+                  hover: { cursor: 'pointer', outline: 'none' },
+                  pressed: { outline: 'none' }
+                }}
+              >
+                <circle 
+                  r={4 / position.zoom} 
+                  fill={markerColor} 
+                  stroke="#111" 
+                  strokeWidth={1.5 / position.zoom} 
+                />
+                {position.zoom > 2.5 && (
+                  <text 
+                    textAnchor="middle" 
+                    y={-(8 / position.zoom)} 
+                    style={{ 
+                      fill: '#fff', 
+                      fontSize: `${10 / position.zoom}px`, 
+                      fontWeight: 'bold',
+                      pointerEvents: 'none'
+                    }}
+                    stroke="#000"
+                    strokeWidth={2 / position.zoom}
+                    strokeLinejoin="round"
+                    paintOrder="stroke fill"
+                  >
+                    {mGroup.name}
+                  </text>
+                )}
+              </Marker>
+            );
+          })}
         </ZoomableGroup>
       </ComposableMap>
       
