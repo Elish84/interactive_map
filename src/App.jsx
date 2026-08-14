@@ -4,6 +4,7 @@ import LegendPanel from './LegendPanel';
 import CountryModal from './CountryModal';
 import CategoryModal from './CategoryModal';
 import SettingsModal from './SettingsModal';
+import ShareModal from './ShareModal';
 import './index.css';
 
 import { auth, googleProvider, db } from './firebase';
@@ -21,9 +22,40 @@ const App = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [settings, setSettings] = useState({ countryFillOpacity: 0.6, showCountryFills: true });
+  
+  const [isPublicView, setIsPublicView] = useState(false);
+  const [publicUserId, setPublicUserId] = useState(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mapUserId = params.get('map');
+    
+    if (mapUserId) {
+      setIsPublicView(true);
+      setPublicUserId(mapUserId);
+      const fetchPublicMap = async () => {
+        try {
+          const docRef = doc(db, 'users', mapUserId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setCategories(data.categories || []);
+            setVisitedCountries(data.visitedCountries || {});
+            if (data.settings) setSettings(data.settings);
+          } else {
+            alert('מפה ציבורית זו אינה קיימת או שהוסרה.');
+          }
+        } catch (error) {
+          console.error("Error fetching public map:", error);
+          alert('שגיאה בטעינת המפה הציבורית.');
+        }
+      };
+      fetchPublicMap();
+      return; // Skip normal auth flow
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -228,8 +260,10 @@ const App = () => {
         }}
         onDeleteCategory={handleDeleteCategory}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenShare={() => setIsShareModalOpen(true)}
         user={user}
         onLogout={handleLogout}
+        isPublicView={isPublicView}
       />
       
       {selectedCountry && (
@@ -239,6 +273,7 @@ const App = () => {
           onSave={(visits) => handleUpdateVisits(selectedCountry.id, visits)}
           onClose={() => setSelectedCountry(null)}
           categories={categories}
+          isPublicView={isPublicView}
         />
       )}
       
@@ -253,11 +288,18 @@ const App = () => {
         />
       )}
       
-      {isSettingsModalOpen && (
+      {isSettingsModalOpen && !isPublicView && (
         <SettingsModal 
           settings={settings}
           onSave={handleSaveSettings}
           onClose={() => setIsSettingsModalOpen(false)}
+        />
+      )}
+
+      {isShareModalOpen && !isPublicView && user && (
+        <ShareModal 
+          userId={user.uid}
+          onClose={() => setIsShareModalOpen(false)}
         />
       )}
     </div>
