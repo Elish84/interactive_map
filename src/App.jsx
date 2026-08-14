@@ -3,6 +3,7 @@ import WorldMap from './WorldMap';
 import LegendPanel from './LegendPanel';
 import CountryModal from './CountryModal';
 import CategoryModal from './CategoryModal';
+import SettingsModal from './SettingsModal';
 import './index.css';
 
 import { auth, googleProvider, db } from './firebase';
@@ -19,6 +20,8 @@ const App = () => {
   const [filterCategories, setFilterCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settings, setSettings] = useState({ countryFillOpacity: 0.6, showCountryFills: true });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -31,6 +34,7 @@ const App = () => {
             const data = userDoc.data();
             setCategories(data.categories || []);
             setVisitedCountries(data.visitedCountries || {});
+            if (data.settings) setSettings(data.settings);
           } else {
             // First time login - try to migrate local storage
             let localCategories = [];
@@ -61,7 +65,8 @@ const App = () => {
             // Save to Firestore
             await setDoc(doc(db, 'users', currentUser.uid), {
               categories: localCategories,
-              visitedCountries: localVisits
+              visitedCountries: localVisits,
+              settings: { countryFillOpacity: 0.6, showCountryFills: true }
             });
           }
         } catch (error) {
@@ -77,17 +82,24 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  const saveToCloud = async (newCats, newVisits) => {
+  const saveToCloud = async (newCats, newVisits, newSettings) => {
     if (!user) return;
     try {
       await setDoc(doc(db, 'users', user.uid), {
         categories: newCats,
-        visitedCountries: newVisits
+        visitedCountries: newVisits,
+        settings: newSettings || settings
       });
     } catch (e) {
       console.error("Error saving to cloud", e);
       alert("שגיאה בשמירת נתונים בענן - ודא שיש הרשאות כתיבה ב-Firestore.");
     }
+  };
+
+  const handleSaveSettings = (newSettings) => {
+    setSettings(newSettings);
+    saveToCloud(categories, visitedCountries, newSettings);
+    setIsSettingsModalOpen(false);
   };
 
   const handleUpdateVisits = (geoId, visits) => {
@@ -198,6 +210,7 @@ const App = () => {
         onCountryClick={setSelectedCountry}
         filterCategories={filterCategories}
         categories={categories}
+        settings={settings}
       />
       <LegendPanel 
         visitedCountries={visitedCountries}
@@ -214,6 +227,7 @@ const App = () => {
           setIsCategoryModalOpen(true);
         }}
         onDeleteCategory={handleDeleteCategory}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
         user={user}
         onLogout={handleLogout}
       />
@@ -236,6 +250,14 @@ const App = () => {
             setIsCategoryModalOpen(false);
             setEditingCategory(null);
           }}
+        />
+      )}
+      
+      {isSettingsModalOpen && (
+        <SettingsModal 
+          settings={settings}
+          onSave={handleSaveSettings}
+          onClose={() => setIsSettingsModalOpen(false)}
         />
       )}
     </div>

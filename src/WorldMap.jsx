@@ -5,7 +5,7 @@ import { Plus, Minus, MapPin } from 'lucide-react';
 const geoUrl = "https://unpkg.com/world-atlas@2.0.2/countries-50m.json";
 const usUrl = "https://unpkg.com/us-atlas@3/states-10m.json";
 
-const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categories }) => {
+const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categories, settings = { countryFillOpacity: 0.6, showCountryFills: true } }) => {
   const [tooltipContent, setTooltipContent] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ coordinates: [0, 0], zoom: 1 });
@@ -101,15 +101,27 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
 
     const displayName = isUsState ? `${geo.properties.name} (ארה"ב)` : geo.properties.name;
     const isFilteredOut = visits.length > 0 && activeCats.length === 0; // has visits but none match filter
+    const isVisited = activeCats.length > 0 && !isFilteredOut;
+    
+    let actualFill = fill;
+    let actualOpacity = 1;
+    
     if (isFilteredOut) {
-      fill = 'var(--map-default)';
+      actualFill = 'var(--map-default)';
+    } else if (isVisited) {
+      if (!settings.showCountryFills) {
+        actualFill = 'var(--map-default)';
+        actualOpacity = 1;
+      } else {
+        actualOpacity = settings.countryFillOpacity;
+      }
     }
 
     return (
       <Geography
         key={geo.rsmKey || geoId}
         geography={geo}
-        fill={fill}
+        fill={actualFill}
         stroke="var(--map-stroke)"
         strokeWidth={0.5 / position.zoom}
         onClick={() => onCountryClick({ id: geoId, name: displayName })}
@@ -124,8 +136,8 @@ const WorldMap = ({ visitedCountries, onCountryClick, filterCategories, categori
           setTooltipContent(null);
         }}
         style={{
-          default: { outline: 'none', transition: 'fill 250ms' },
-          hover: { fill: (activeCats.length > 0 && !isFilteredOut) ? fill : 'var(--map-hover)', outline: 'none', filter: 'brightness(1.2)', cursor: 'pointer' },
+          default: { outline: 'none', fillOpacity: actualOpacity, transition: 'fill 250ms, fill-opacity 250ms' },
+          hover: { fillOpacity: actualOpacity, fill: (isVisited && settings.showCountryFills) ? actualFill : 'var(--map-hover)', outline: 'none', filter: 'brightness(1.2)', cursor: 'pointer' },
           pressed: { outline: 'none' },
         }}
       />

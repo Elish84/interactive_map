@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
-import { Globe, Plus, Pencil, Trash2, Menu, X } from 'lucide-react';
+import { Globe, Plus, Pencil, Trash2, Menu, X, Settings, LogOut } from 'lucide-react';
 
-const LegendPanel = ({ visitedCountries, filterCategories, toggleFilterCategory, clearFilters, categories, onAddCategory, onEditCategory, onDeleteCategory, user, onLogout }) => {
+const LegendPanel = ({ 
+  visitedCountries, 
+  filterCategories, 
+  toggleFilterCategory, 
+  clearFilters, 
+  categories, 
+  onAddCategory, 
+  onEditCategory, 
+  onDeleteCategory, 
+  onOpenSettings,
+  user,
+  onLogout
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const counts = { total: 0 };
@@ -32,9 +44,14 @@ const LegendPanel = ({ visitedCountries, filterCategories, toggleFilterCategory,
             <h1>TripMap <Globe size={24} style={{ display: 'inline', verticalAlign: 'middle', color: '#b8c1ec' }}/></h1>
             <p>סה"כ מדינות מתוייגות: {Object.keys(visitedCountries).length}</p>
           </div>
-          <button className="mobile-legend-close" onClick={() => setIsOpen(false)}>
-            <X size={24} />
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="icon-button" onClick={onOpenSettings} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <Settings size={24} />
+            </button>
+            <button className="mobile-legend-close icon-button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
