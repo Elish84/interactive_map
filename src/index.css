@@ -247,7 +247,15 @@ body {
   display: none;
 }
 
+.desktop-collapse-btn {
+  display: flex;
+}
+
 @media (max-width: 768px) {
+  .desktop-collapse-btn, .desktop-collapsed-view {
+    display: none !important;
+  }
+
   /* Toggle button */
   .mobile-legend-toggle {
     display: flex;

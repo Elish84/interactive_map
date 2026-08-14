@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Plus, Pencil, Trash2, Menu, X, Settings, LogOut, Share2 } from 'lucide-react';
+import { Globe, Plus, Pencil, Trash2, Menu, X, Settings, LogOut, Share2, Minimize2, Maximize2 } from 'lucide-react';
 
 const LegendPanel = ({ 
   visitedCountries, 
@@ -31,6 +31,36 @@ const LegendPanel = ({
     });
   });
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  if (isCollapsed) {
+    return (
+      <>
+        <button 
+          className="mobile-legend-toggle glass" 
+          onClick={() => setIsOpen(true)}
+        >
+          <Menu size={24} />
+        </button>
+        <button 
+          className="glass desktop-collapsed-view"
+          onClick={() => setIsCollapsed(false)}
+          style={{
+            position: 'absolute', top: '24px', right: '24px', zIndex: 10,
+            padding: '12px 16px', borderRadius: '16px', border: '1px solid var(--panel-border)',
+            background: 'var(--panel-bg)', color: 'white', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)'
+          }}
+        >
+          <Globe size={24} color="#b8c1ec" />
+          <span style={{ fontWeight: 'bold' }}>הטיולים שלי</span>
+          <Maximize2 size={18} style={{ marginRight: '16px', color: 'var(--text-muted)' }} />
+        </button>
+      </>
+    );
+  }
+
   return (
     <>
       <button 
@@ -49,14 +79,17 @@ const LegendPanel = ({
           <div style={{ display: 'flex', gap: '8px' }}>
             {!isPublicView && (
               <>
-                <button className="icon-button" onClick={onOpenShare} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <button className="icon-button" onClick={onOpenShare} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} title="שתף מפה">
                   <Share2 size={24} />
                 </button>
-                <button className="icon-button" onClick={onOpenSettings} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <button className="icon-button" onClick={onOpenSettings} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} title="הגדרות">
                   <Settings size={24} />
                 </button>
               </>
             )}
+            <button className="icon-button desktop-collapse-btn" onClick={() => setIsCollapsed(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} title="צמצם חלונית">
+              <Minimize2 size={24} />
+            </button>
             <button className="mobile-legend-close icon-button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
               <X size={24} />
             </button>
